@@ -317,7 +317,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	{
 		return CI_Controller::get_instance();
 	}
-
 	if (file_exists(APPPATH.'core/'.$CFG->config['subclass_prefix'].'Controller.php'))
 	{
 		require_once APPPATH.'core/'.$CFG->config['subclass_prefix'].'Controller.php';

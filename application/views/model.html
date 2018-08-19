@@ -1,0 +1,348 @@
+<html>
+<meta charset="utf-8">
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/echarts/4.1.0.rc2/echarts-en.common.js"></script>
+<head>
+
+</head>
+<body>
+<!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+<select class="sele">
+    <option value ="11">11位特征,新能源</option>
+    <option value ="110">100+特征,综合车主</option>
+    <option value="paizi">11位特征,新能源车牌</option>
+</select>
+<select class="threshold">
+    <option value ="0.5">阈值0.5</option>
+    <option value ="0.6">阈值0.6</option>
+    <option value="0.7">阈值0.7</option>
+    <option value="0.4">阈值0.4</option>
+</select>
+<div id="main" style="width: 80%;height:400px;margin-top: 50px"></div>
+</body>
+
+
+<input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />neg-precision </br>
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>neg-recall</br>
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>negf1score</br>
+
+<input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />pos-precision </br>
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>pos-recall</br>
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>pos-f1score</br>
+
+<input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />all-precision </br>
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>all-recall</br>
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>all-f1score</br>
+
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>auc</br>
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>accuracy</br>
+
+<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>allsupport</br>
+<input id="close" type="submit" value="全部关闭">
+
+</body>
+<script type="text/javascript">
+    myChart = echarts.init(document.getElementById('main'));
+    $('#close').click(function(){
+        $('.change').removeAttr("checked")
+        refreshData()
+    })
+    // 基于准备好的dom，初始化echarts实例
+    seletype='11'
+    $(".sele").change(function(){
+
+        seletype=$(this).val();
+        getmsg()
+
+
+    })
+    threshold='0.5'
+    $(".threshold").change(function(){
+
+        threshold=$(this).val();
+        getmsg()
+
+
+    })
+    $.ajax(
+        {
+            'url':'test',
+            'type':'post',
+            'data':"type="+seletype+'&threshold='+threshold,
+            'success':function (str) {
+                json1=JSON.parse(str)
+                confShow=json1['conf']['show'];
+                data=json1['data'];
+                cmd=''
+                for(row in confShow){
+                    cmd+=confShow[row]+'=[];'
+                }
+                eval(cmd)
+
+                var myDate=new Date()
+                var id=[]
+                var name=[]
+
+
+                // time.push(parseFloat(json1[i]['time']))
+                for(var i=1;i<data.length;i++){
+                    for(var j=0;j<confShow.length;j++){
+
+                        datacmd=''
+                        numstr=data[i][confShow[j]]
+                        if(isNaN(numstr)){
+                            numstr='"'+numstr+'"'
+                        }
+                        datacmd=confShow[j]+'.push(parseFloat('+numstr+'));';
+                        eval(datacmd);
+                    }
+                }
+
+//                console.log(time)
+                // 指定图表的配置项和数据
+                option = {
+                    title: {
+                        text: '模型数据总览'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+
+
+
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: zhengPersent,
+                        name:'正样本占比'
+                    },
+                    yAxis: [{
+                        type: 'value'
+
+                    }, {
+                        name: '预测人数(人)',
+                        //nameLocation: 'start',
+                        max: null,
+                        type: 'value',
+                        inverse: false //起始点
+                    }],
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    toolbox: {
+                        feature: {
+                            saveAsImage: {}
+                        }
+
+                    },
+                    // series: [
+                    //     {name:'negprecision',type:'line',stack:'negprecision',data:negprecision,smooth:true},
+                    //     {name:'negrecall',type:'line',stack:'negrecall',data:negrecall,smooth:true},
+                    //     {name:'negf1score',type:'line',stack:'negf1score',data:negf1score,smooth:true},
+                    //     {name:'posprecision',type:'line',stack:'posprecision',data:posprecision,smooth:true},
+                    //     {name:'posrecall',type:'line',stack:'posrecall',data:posrecall,smooth:true},
+                    //     {name:'posf1score',type:'line',stack:'posf1score',data:posf1score,smooth:true},
+                    //     {name:'allprecision',type:'line',stack:'allprecision',data:allprecision,smooth:true},
+                    //     {name:'allrecall',type:'line',stack:'allrecall',data:allrecall,smooth:true},
+                    //     {name:'allf1score',type:'line',stack:'allf1score',data:allf1score,smooth:true},
+                    //     {name:'auc',type:'line',stack:'auc',data:auc,smooth:true},
+                    //     {name:'accuracy',type:'line',stack:'accuracy',data:accuracy,smooth:true},
+                    //     {name:'allpsupport',type:'bar',stack:'allpsupport',data:allpsupport,smooth:true,yAxisIndex:1},
+                    // ]
+                };
+                arrayStr='var dataseries=['
+                for(var i=0;i<confShow.length;i++){
+                    datarow=confShow[i]
+                    strrow="'"+confShow[i]+"'"
+                    arrayStr+='{name:'+strrow+',type:\'line\',stack:'+strrow+',data:'+datarow+',smooth:true},'
+
+                }
+                arrayStr+=']'
+                eval(arrayStr)
+                // 使用刚指定的配置项和数据显示图表。
+                option.series=dataseries
+                myChart.setOption(option);
+            },
+
+        }
+    )
+    $(".change").change(function(){
+        refreshData()
+    })
+
+    function refreshData(){
+        // seriesConf={
+        //     "negprecision":{name:'negprecision',type:'line',stack:'negprecision',data:negprecision,smooth:true},
+        //     'negrecall':{name:'negrecall',type:'line',stack:'negrecall',data:negrecall,smooth:true},
+        //     'negf1score':{name:'negf1score',type:'line',stack:'negf1score',data:negf1score,smooth:true},
+        //     'posprecision':{name:'posprecision',type:'line',stack:'posprecision',data:posprecision,smooth:true},
+        //     'posrecall':{name:'posrecall',type:'line',stack:'posrecall',data:posrecall,smooth:true},
+        //     // 'posf1score':{name:'posf1score',type:'line',stack:'posf1score',data:posf1score,smooth:true},
+        //     // 'allprecision':{name:'allprecision',type:'line',stack:'allprecision',data:allprecision,smooth:true},
+        //     // 'allrecall':{name:'allrecall',type:'line',stack:'allrecall',data:allrecall,smooth:true},
+        //     // 'allf1score':{name:'allf1score',type:'line',stack:'allf1score',data:allf1score,smooth:true},
+        //     // 'auc':{name:'auc',type:'line',stack:'auc',data:auc,smooth:true},
+        //     // 'accuracy':{name:'accuracy',type:'line',stack:'accuracy',data:accuracy,smooth:true},
+        //     // "allpsupport":{name:'allpsupport',type:'bar',stack:'allpsupport',data:allpsupport,smooth:true,yAxisIndex:1},
+        //
+        // }
+        arrayStr='var seriesConf=['
+        for(var i=0;i<confShow.length;i++){
+            datarow=confShow[i]
+            strrow="'"+confShow[i]+"'"
+            arrayStr+='{name:'+strrow+',type:\'line\',stack:'+strrow+',data:'+datarow+',smooth:true},'
+
+        }
+        arrayStr+=']'
+        eval(arrayStr)
+        var runArr=[]
+        // confShow=['negprecision','negrecall','negf1score','posprecision','posrecall','posf1score','allprecision','allrecall','allf1score','auc','accuracy','allpsupport']
+
+            $(".change").each(function (index) {
+                if($(this).is(":checked")){
+                    runArr.push(seriesConf[confShow[index]])
+                }
+            })
+        var option = myChart.getOption();
+
+        option.series=runArr
+        myChart.clear()
+        myChart.setOption(option,true);
+    }
+
+
+
+    function getmsg() {
+        $.ajax(
+            {
+                'url':'test',
+                'type':'post',
+                'data':"type="+seletype+'&threshold='+threshold,
+                'success':function (str) {
+                    json1=JSON.parse(str)
+                    var myDate=new Date()
+                    var id=[]
+                    time=[]
+                    negprecision=[]
+                    negrecall=[]
+                    negf1score=[]
+                    negpsupport=[]
+                    posprecision=[]
+                    posrecall=[]
+                    posf1score=[]
+                    pospsupport=[]
+                    allprecision=[]
+                    allrecall=[]
+                    allf1score=[]
+                    allpsupport=[]
+                    num=[]
+                    auc=[]
+                    var name=[]
+                    type=[]
+                    zhengPersent=[]
+                    note=[]
+                    filename=[]
+                    accuracy=[]
+                    for(var i=1;i<json1.length;i++){
+                        id.push(parseFloat(json1[i]['id']))
+                        time.push(parseFloat(json1[i]['time']))
+                        negprecision.push(parseFloat(json1[i]['negprecision']))
+                        negrecall.push(parseFloat(json1[i]['negrecall']))
+                        negf1score.push(parseFloat(json1[i]['negf1score']))
+                        negpsupport.push(parseFloat(json1[i]['negpsupport']))
+                        posprecision.push(parseFloat(json1[i]['posprecision']))
+                        posrecall.push(parseFloat(json1[i]['posrecall']))
+                        posf1score.push(parseFloat(json1[i]['posf1score']))
+                        pospsupport.push(parseFloat(json1[i]['pospsupport']))
+                        allprecision.push(parseFloat(json1[i]['allprecision']))
+                        allrecall.push(parseFloat(json1[i]['allrecall']))
+                        allf1score.push(parseFloat(json1[i]['allf1score']))
+                        allpsupport.push(parseFloat(json1[i]['allpsupport']))
+                        num.push(parseFloat(json1[i]['num']))
+                        auc.push(parseFloat(json1[i]['auc']))
+                        name.push(parseFloat(json1[i]['name']))
+                        type.push(parseFloat(json1[i]['type']))
+                        zhengPersent.push(parseFloat(json1[i]['zhengPersent']))
+                        note.push(parseFloat(json1[i]['note']))
+                        filename.push(parseFloat(json1[i]['filename']))
+                        accuracy.push(parseFloat(json1[i]['accuracy']))
+
+
+                    }
+//                console.log(time)
+                    // 指定图表的配置项和数据
+                    option = {
+                        title: {
+                            text: '模型数据总览'
+                        },
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+
+
+
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: zhengPersent
+                        },
+                        yAxis: {
+                            type: 'value'
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        toolbox: {
+                            feature: {
+                                saveAsImage: {}
+                            }
+
+                        },
+                        series: [
+////                        {name:':ac:cept:',type:'line',stack:'id',data:id,smooth:true},
+////                        {name:'accept',type:'line',stack:'time',data:time,smooth:true},
+                            {name:'negprecision',type:'line',stack:'negprecision',data:negprecision,smooth:true},
+                            {name:'negrecall',type:'line',stack:'negrecall',data:negrecall,smooth:true},
+                            {name:'negf1score',type:'line',stack:'negf1score',data:negf1score,smooth:true},
+////                        {name:'negpsupport',type:'line',stack:'negpsupport',data:negpsupport,smooth:true},
+                            {name:'posprecision',type:'line',stack:'posprecision',data:posprecision,smooth:true},
+                            {name:'posrecall',type:'line',stack:'posrecall',data:posrecall,smooth:true},
+                            {name:'posf1score',type:'line',stack:'posf1score',data:posf1score,smooth:true},
+////                        {name:'pospsupport',type:'line',stack:'pospsupport',data:pospsupport,smooth:true},
+                            {name:'allprecision',type:'line',stack:'allprecision',data:allprecision,smooth:true},
+                            {name:'allrecall',type:'line',stack:'allrecall',data:allrecall,smooth:true},
+                            {name:'allf1score',type:'line',stack:'allf1score',data:allf1score,smooth:true},
+////                        {name:'allpsupport',type:'line',stack:'allpsupport',data:allpsupport,smooth:true},
+////                        {name:'num',type:'line',stack:'num',data:num,smooth:true},
+                            {name:'auc',type:'line',stack:'auc',data:auc,smooth:true},
+////                        {name:'accept',type:'line',stack:'name',data:name,smooth:true},
+////                        {name:'accept',type:'line',stack:'type',data:type,smooth:true},
+////                        {name:'accept',type:'line',stack:'zhengPersent',data:zhengPersent,smooth:true},
+////                        {name:'accept',type:'line',stack:'note',data:note,smooth:true},
+////                        {name:'accept',type:'line',stack:'filename',data:filename,smooth:true},
+                            {name:'accuracy',type:'line',stack:'accuracy',data:accuracy,smooth:true},
+
+
+                        ]
+                    };
+
+                    // 使用刚指定的配置项和数据显示图表。
+                    refreshData()
+//                    myChart.setOption(option);
+                },
+
+            }
+        )
+    }
+
+
+
+
+</script>
+</html>
