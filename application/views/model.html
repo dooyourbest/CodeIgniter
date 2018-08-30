@@ -93,6 +93,7 @@
                         if(isNaN(numstr)){
                             numstr='"'+numstr+'"'
                         }
+                        
                         datacmd=confShow[j]+'.push(parseFloat('+numstr+'));';
                         eval(datacmd);
                     }
@@ -113,7 +114,7 @@
                     xAxis: {
                         type: 'category',
                         boundaryGap: false,
-                        data: zhengPersent,
+                        data: level,
                         name:'正样本占比'
                     },
                     yAxis: [{
