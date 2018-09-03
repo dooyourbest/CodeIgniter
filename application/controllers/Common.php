@@ -32,12 +32,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	}
 	public function set($key ,$val=null){
 		if(isset($val)){
-			return false;
+			$this->$key = $val;
+			return true;
 		}
-		$this->$key = $val;
+		return false;
+
+        
 	}	
 	public function get($key){
-		if(!isset($val)){
+		if(!isset($key)){
 			return false;
 		}
 		return $this->$key;
@@ -45,6 +48,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	public function createTable($mainFiled,$tableName,$arr){
 		$this->set('mainFiled',$mainFiled);
 		$sql="CREATE TABLE `$tableName` (";
+		$sql.=$this->returnType($mainFiled).',';
 		foreach($arr as $key=>$val){
 			$sql.=$this->returnType($key,$val).',';
 		}
@@ -53,11 +57,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		echo $sql;
 	}
 	
-	public function returnType($filedName,$type,$isAutoIncrease=false,$comment=false,$deafault=true){
+	public function returnType($filedName,$type=false,$isAutoIncrease=false,$comment=false,$deafault=true){
 		try{
 			$mainFiled=$this->get('mainFiled');
 		}catch(Exception $e){
 			throw new Exception('no set main key');
+		}
+		if($mainFiled==$filedName){
+			$msg = "`$filedName`"." int(12) NOT NULL AUTO_INCREMENT ";
+			return $msg;
 		}
 		$conf=array(
 			'int12'=> "`$filedName`"." int(12) NOT NULL DEFAULT '0'",
@@ -70,12 +78,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			'decimal10'=> "`$filedName`"." decimal(10) NOT NULL DEFAULT '0'",
 		);
 		$msg=$conf[$type];
-		echo $mainFiled;
-		echo 1;
-		echo $filedName;
-		if($mainFiled==$filedName){
-			$msg.=' AUTO_INCREMENT';
-		}
 		if($comment){
 			$msg=$msg+' COMMENT'+"'{$comment}'";
 		}
@@ -83,11 +85,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			
 	}
 	
-	public function index(){
-		echo 123;
-		$res=$this->getMsg(array('id','name'),array('id'=>'>10','name'=>'>1'));
-		print_r($res);
-	}
 	public function select(){
 		
 		$sql='SELECT ';
@@ -124,7 +121,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		$this->db->query($sql);
 	}
 	protected function getMsg($field=null,$condition=null){
-		$this->set('tableName','model');
 		if(isset($field)){$this->field=$field;}
 		if(isset($condition)){$this->field=$field;}
 		$sql=$this->select($field,$condition);
@@ -143,5 +139,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
      }
 	    $res=$this->db->insert($this->tableName,$msg);
      }
-
+    public function test(){
+	    $returnMsg=array();
+	    $returnMsg['data']=$this->getMsg();
+	    $returnMsg['conf']=$this->conf();
+		echo json_encode($returnMsg);
+	}
+    public function index(){
+        $this->load->view('model.html');
+    }
 }

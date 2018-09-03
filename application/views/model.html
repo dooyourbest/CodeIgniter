@@ -6,23 +6,12 @@
 
 </head>
 <body>
-<!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
-<select class="sele">
-    <option value ="11">11位特征,新能源</option>
-    <option value ="110">100+特征,综合车主</option>
-    <option value="paizi">11位特征,新能源车牌</option>
-</select>
-<select class="threshold">
-    <option value ="0.5">阈值0.5</option>
-    <option value ="0.6">阈值0.6</option>
-    <option value="0.7">阈值0.7</option>
-    <option value="0.4">阈值0.4</option>
-</select>
+
 <div id="main" style="width: 80%;height:400px;margin-top: 50px"></div>
 </body>
 
 
-<input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />neg-precision </br>
+<!-- <input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />neg-precision </br>
 <input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>neg-recall</br>
 <input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>negf1score</br>
 
@@ -38,45 +27,50 @@
 <input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>accuracy</br>
 
 <input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>allsupport</br>
-<input id="close" type="submit" value="全部关闭">
+<input id="close" type="submit" value="全部关闭"> -->
 
 </body>
 <script type="text/javascript">
+// 初始化
     myChart = echarts.init(document.getElementById('main'));
     $('#close').click(function(){
         $('.change').removeAttr("checked")
         refreshData()
     })
     // 基于准备好的dom，初始化echarts实例
-    seletype='11'
-    $(".sele").change(function(){
+    // seletype='11'
+    // $(".sele").change(function(){
 
-        seletype=$(this).val();
-        getmsg()
-
-
-    })
-    threshold='0.5'
-    $(".threshold").change(function(){
-
-        threshold=$(this).val();
-        getmsg()
+    //     seletype=$(this).val();
+    //     getmsg()
 
 
-    })
+    // })
+    // threshold='0.5'
+    // $(".threshold").change(function(){
+
+    //     threshold=$(this).val();
+    //     getmsg()
+
+
+    // })
     $.ajax(
         {
             'url':'test',
             'type':'post',
-            'data':"type="+seletype+'&threshold='+threshold,
+            // 'data':"type="+seletype+'&threshold='+threshold,
             'success':function (str) {
                 json1=JSON.parse(str)
                 confShow=json1['conf']['show'];
                 data=json1['data'];
                 cmd=''
+                var showConfArray=[]
                 for(row in confShow){
-                    cmd+=confShow[row]+'=[];'
+                    var msg=[row,confShow[row]]
+                    showConfArray.push(msg)
+                    cmd+=row+'=[];'
                 }
+                
                 eval(cmd)
 
                 var myDate=new Date()
@@ -84,20 +78,47 @@
                 var name=[]
 
 
-                // time.push(parseFloat(json1[i]['time']))
-                for(var i=1;i<data.length;i++){
-                    for(var j=0;j<confShow.length;j++){
+                // for(var i=1;i<data.length;i++){
+                //     for(var j=0;j<confShow.length;j++){
 
-                        datacmd=''
-                        numstr=data[i][confShow[j]]
-                        if(isNaN(numstr)){
-                            numstr='"'+numstr+'"'
-                        }
+                //         datacmd=''
+                //         numstr=data[i][confShow[j]]
+                //         if(isNaN(numstr)){
+                //             numstr='"'+numstr+'"'
+                //         }
                         
-                        datacmd=confShow[j]+'.push(parseFloat('+numstr+'));';
-                        eval(datacmd);
+                //         datacmd=confShow[j]+'.push(parseFloat('+numstr+'));';
+                //         eval(datacmd);
+                //     }
+                // }
+                
+
+                for (var i=0;i<data.length;i++){
+                    for(var j=0;i<showConfArray.length;j++){
+                        
+                        confFiledName = showConfArray[j][0] //字段名称
+                        confFiledShowType = showConfArray[j][1][0] //展示类型data/label
+                        confFiledFiledType = showConfArray[j][1][1]//数据类型 string/int
+                        console.log(confFiledFiledType)
+                        console.log(confFiledShowType)
+                        console.log(confFiledName)
+                        return
+                        var rowdata = data[i][confFiledName]
+                        parseMsgCmd(confFiledName,confFiledFiledType,rowdata)
+                        return
                     }
                 }
+                function parseMsgCmd(confFiledName,type,rowdata){
+                    var cmd=""
+                    if(type=='string'){
+                        cmd = confFiledName+'.push('+rowdata+');';
+                    }else if(type=='int'){
+                         cmd = confFiledName+'.push(parseFloat('+rowdata+'));';
+                    }
+                    console.log(cmd)
+                    // eval(cmd)
+                }
+                
 
 //                console.log(time)
                 // 指定图表的配置项和数据
@@ -106,7 +127,12 @@
                         text: '模型数据总览'
                     },
                     tooltip: {
-                        trigger: 'axis'
+                        trigger: 'axis',
+                        formatter: function (params) {
+                            params = params[0];
+                            var date = new Date(params.name);
+                            return 1123;
+                        },
                     },
 
 
