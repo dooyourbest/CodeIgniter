@@ -12,21 +12,7 @@
 
 
 <!-- <input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />neg-precision </br>
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>neg-recall</br>
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>negf1score</br>
 
-<input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />pos-precision </br>
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>pos-recall</br>
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>pos-f1score</br>
-
-<input type="checkbox" name="vehicle" value="Car" checked="checked" class="change"  />all-precision </br>
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>all-recall</br>
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>all-f1score</br>
-
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>auc</br>
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>accuracy</br>
-
-<input type="checkbox" name="vehicle" value="Car" checked="checked"  class="change"/>allsupport</br>
 <input id="close" type="submit" value="全部关闭"> -->
 
 </body>
@@ -54,6 +40,9 @@
 
 
     // })
+    var DATE_CONF_KEYWORD="data"
+    var SERIES_CONF_KEYWORD="label"
+
     $.ajax(
         {
             'url':'test',
@@ -65,14 +54,22 @@
                 data=json1['data'];
                 cmd=''
                 var showConfArray=[]
+                var dataConf=[]
+                var seriesConf=[]
                 for(row in confShow){
                     var msg=[row,confShow[row]]
+                    //设置全局的数据和label设置
+                    if(confShow[row][0]==DATE_CONF_KEYWORD){
+                        dataConf.push(row)
+                    }else{
+                        seriesConf.push(row)
+                    }
                     showConfArray.push(msg)
                     cmd+=row+'=[];'
+                    // if(dataConf)
                 }
-                
                 eval(cmd)
-
+                
                 var myDate=new Date()
                 var id=[]
                 var name=[]
@@ -92,47 +89,53 @@
                 //     }
                 // }
                 
-
+               
                 for (var i=0;i<data.length;i++){
-                    for(var j=0;i<showConfArray.length;j++){
-                        
+                    for(var j=0;j<showConfArray.length;j++){
                         confFiledName = showConfArray[j][0] //字段名称
                         confFiledShowType = showConfArray[j][1][0] //展示类型data/label
                         confFiledFiledType = showConfArray[j][1][1]//数据类型 string/int
-                        console.log(confFiledFiledType)
-                        console.log(confFiledShowType)
-                        console.log(confFiledName)
-                        return
                         var rowdata = data[i][confFiledName]
                         parseMsgCmd(confFiledName,confFiledFiledType,rowdata)
-                        return
                     }
                 }
                 function parseMsgCmd(confFiledName,type,rowdata){
                     var cmd=""
+                    console.log(confFiledName)
+                    console.log(type)
+                    console.log(rowdata);
                     if(type=='string'){
-                        cmd = confFiledName+'.push('+rowdata+');';
+                        cmd = confFiledName+'.push("'+rowdata+'");';
                     }else if(type=='int'){
                          cmd = confFiledName+'.push(parseFloat('+rowdata+'));';
                     }
-                    console.log(cmd)
-                    // eval(cmd)
+                    eval(cmd)
+                }
+                for(var i=0;i<confShow.length;i++){
+
                 }
                 
-
-//                console.log(time)
-                // 指定图表的配置项和数据
+            //     console.log(data);
+            //    console.log(time)
+            //     指定图表的配置项和数据
+                {
+   
+}
+                // console.log(data);
+                for(var i=0;i<data.length;i++){
+                }
                 option = {
                     title: {
                         text: '模型数据总览'
                     },
                     tooltip: {
                         trigger: 'axis',
-                        formatter: function (params) {
-                            params = params[0];
-                            var date = new Date(params.name);
-                            return 1123;
+                        axisPointer: {
+                            type: 'cross'
                         },
+                        // formatter: function (level) {
+                        //     console.log(level)
+                        // },
                     },
 
 
@@ -181,13 +184,14 @@
                     // ]
                 };
                 arrayStr='var dataseries=['
-                for(var i=0;i<confShow.length;i++){
-                    datarow=confShow[i]
-                    strrow="'"+confShow[i]+"'"
+                for(var i=0;i<dataConf.length;i++){
+                    datarow=dataConf[i]
+                    strrow="'"+dataConf[i]+"'"
                     arrayStr+='{name:'+strrow+',type:\'line\',stack:'+strrow+',data:'+datarow+',smooth:true},'
 
                 }
                 arrayStr+=']'
+                
                 eval(arrayStr)
                 // 使用刚指定的配置项和数据显示图表。
                 option.series=dataseries
